@@ -39,6 +39,7 @@
 #include <rtapi_string.h>
 
 #include <saicanon.hh>
+#include "tooldata.hh"
 
 InterpBase *pinterp;
 #define interp_new (*pinterp)
@@ -337,7 +338,12 @@ int read_tool_file(  /* ARGUMENTS         */
       tool_file_name = buffer;
     }
 
+#ifdef TOOL_MMAP //{
+  // no toolTable[] param used
+  return loadToolTable(tool_file_name, 0, 0);
+#else //}{
   return loadToolTable(tool_file_name, _sai._tools, 0, 0);
+#endif //}
 }
 
 /************************************************************************/
@@ -561,6 +567,16 @@ int main (int argc, char ** argv)
   SET_PARAMETER_FILE_NAME(default_name);
   _outfile = stdout; /* may be reset below */
   go_flag = 0;
+
+#ifdef TOOL_MMAP //{
+  tool_mmap_creator((EMC_TOOL_STAT*)NULL,(changer_t)0);
+  /* Notes:
+  **   1) sai does not use toolInSpindle,pocketPrepped
+  **   2) sai does not distinguish changer type
+  */
+#else //}{
+  tool_nml_register((CANON_TOOL_TABLE*)& _sai._tools);
+#endif //}
 
   while(1) {
       int c = getopt(argc, argv, "p:t:v:bsn:gi:l:T");
